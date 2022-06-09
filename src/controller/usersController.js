@@ -5,35 +5,40 @@ import bcrypt from 'bcrypt';
 export async function singUp(req,res){
     const body = req.body;
 
-    try{
-        const request = await connection.query(
-            `SELECT * 
-            FROM users 
-            WHERE email=$1`,
-            [body.email]
-        );
-
-        if(request.rows.length > 0) {
-            res.status(409).send("Email já cadastrado");
-        }
-        else{
-
-            const encryptedPassword = bcrypt.hashSync(body.password, 10);
-
-            await connection.query(
-                `
-                    INSERT INTO users (name, email, password)
-                    VALUES($1, $2, $3);
-                `,
-                [body.name, body.email, encryptedPassword]
-            );
-
-            res.status(201).send("Usuario cadastrado")
-        }
+    if(body.password !== body.confirmPassword){
+        res.status(409).send("As senhas informadas não batem");
     }
-    catch(err){
-        console.log(chalk.red("Erro ao cadastrar usuário"));
-        console.log(err);
-        res.status(500).send("Erro de conecção");
+    else{
+        try{
+            const request = await connection.query(
+                `SELECT * 
+                FROM users 
+                WHERE email=$1`,
+                [body.email]
+            );
+    
+            if(request.rows.length > 0) {
+                res.status(409).send("Email já cadastrado");
+            }
+            else{
+    
+                const encryptedPassword = bcrypt.hashSync(body.password, 10);
+    
+                await connection.query(
+                    `
+                        INSERT INTO users (name, email, password)
+                        VALUES($1, $2, $3);
+                    `,
+                    [body.name, body.email, encryptedPassword]
+                );
+    
+                res.status(201).send("Usuario cadastrado")
+            }
+        }
+        catch(err){
+            console.log(chalk.red("Erro ao cadastrar usuário"));
+            console.log(err);
+            res.status(500).send("Erro de conecção");
+        }
     }
 }
