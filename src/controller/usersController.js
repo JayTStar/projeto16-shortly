@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import connection from "../db.js";
+import bcrypt from 'bcrypt';
 
 export async function singUp(req,res){
     const body = req.body;
@@ -16,12 +17,15 @@ export async function singUp(req,res){
             res.status(409).send("Email já cadastrado");
         }
         else{
+
+            const encryptedPassword = bcrypt.hashSync(body.password, 10);
+
             await connection.query(
                 `
                     INSERT INTO users (name, email, password)
                     VALUES($1, $2, $3);
                 `,
-                [body.name, body.email, body.password]
+                [body.name, body.email, encryptedPassword]
             );
 
             res.status(201).send("Usuario cadastrado")
